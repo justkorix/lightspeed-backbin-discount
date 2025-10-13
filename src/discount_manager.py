@@ -1,6 +1,7 @@
 import requests
 import os
 import re
+import base64
 from datetime import datetime
 from typing import Optional, List, Dict
 
@@ -9,9 +10,13 @@ class LightspeedDiscountManager:
         self.api_key = os.getenv('LIGHTSPEED_API_KEY')
         self.account_id = os.getenv('LIGHTSPEED_ACCOUNT_ID')
         self.base_url = f"https://api.lightspeedapp.com/API/V3/Account/{self.account_id}"
-        
+
+        # Lightspeed uses Basic Auth with API key as username and empty password
+        auth_string = f"{self.api_key}:"
+        encoded_auth = base64.b64encode(auth_string.encode()).decode()
+
         self.headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Basic {encoded_auth}",
             "Content-Type": "application/json"
         }
         
