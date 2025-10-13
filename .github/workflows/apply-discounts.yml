@@ -28,10 +28,10 @@ jobs:
       
       - name: Apply discounts to aged comics
         env:
-          LIGHTSPEED_API_KEY: ${{ secrets.LIGHTSPEED_API_KEY }}
-          LIGHTSPEED_ACCOUNT_ID: ${{ secrets.LIGHTSPEED_ACCOUNT_ID }}
+          LIGHTSPEED_API_TOKEN: ${{ secrets.LIGHTSPEED_API_TOKEN }}
+          LIGHTSPEED_DOMAIN_PREFIX: ${{ secrets.LIGHTSPEED_DOMAIN_PREFIX }}
           TAG_PREFIX: "new release-"
-          CLEARANCE_PRICE_NAME: "Comics Clearance - 20% Off"
+          PRICE_BOOK_NAME: "Comics Clearance - 20% Off"
           DISCOUNT_DAYS: "14"
           DISCOUNT_PERCENT: "0.20"
         run: |

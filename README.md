@@ -2,19 +2,21 @@
 
 Automatically applies clearance pricing to comic books that are older than 14 days based on date tags.
 
+**Compatible with Lightspeed X-Series (Retail POS)**
+
 ## How It Works
 
 1. **Tagging**: When you import new comics, tag them with `new release-YYYY-MM-DD` (e.g., `new release-2025-10-15`)
 2. **Automation**: Every Sunday at 2 AM, GitHub Actions runs this script
-3. **Processing**: The script finds all comics tagged with dates older than 14 days
-4. **Pricing**: Adds a "Comics Clearance - 20% Off" price to those items
-5. **Staff Action**: Your staff can manually select the clearance price at the POS
+3. **Processing**: The script finds all comics tagged with dates older than 14 days (only affects products with tags)
+4. **Pricing**: Adds items to a "Comics Clearance - 20% Off" price book with discounted prices
+5. **Staff Action**: Your staff can manually select the clearance price book at the POS
 
 ## Setup Instructions
 
 ### 1. Set Up in Lightspeed (One-Time)
 
-Nothing to do! The script automatically creates the "Comics Clearance - 20% Off" price level if it doesn't exist.
+Nothing to do! The script automatically creates the "Comics Clearance - 20% Off" price book if it doesn't exist.
 
 ### 2. Set Up GitHub Repository
 
@@ -37,16 +39,20 @@ Nothing to do! The script automatically creates the "Comics Clearance - 20% Off"
 2. Click **Settings** → **Secrets and variables** → **Actions**
 3. Click **New repository secret**
 4. Add these two secrets:
-   - Name: `LIGHTSPEED_API_KEY`
-     - Value: Your Lightspeed API key
-   - Name: `LIGHTSPEED_ACCOUNT_ID`
-     - Value: Your Lightspeed account ID
+   - Name: `LIGHTSPEED_API_TOKEN`
+     - Value: Your Lightspeed Personal Access Token
+   - Name: `LIGHTSPEED_DOMAIN_PREFIX`
+     - Value: Your store's domain prefix (e.g., `strangeadventures` from the URL)
 
 **How to get your Lightspeed credentials:**
-1. Log into Lightspeed Retail
-2. Go to Setup → API → Personal Token (or API Clients)
-3. Create a new token/client if needed
-4. Copy your Account ID and API Key
+1. Log into Lightspeed Retail POS (X-Series)
+2. Go to **Setup** → **Personal Tokens**
+3. Click **Create Personal Token**
+4. Give it a name like "GitHub Automation"
+5. Copy the generated token (this is your `LIGHTSPEED_API_TOKEN`)
+6. Your domain prefix is the first part of your Lightspeed URL:
+   - Example: If your URL is `https://strangeadventures.retail.lightspeed.app`
+   - Your domain prefix is: `strangeadventures`
 
 ### 4. Enable GitHub Actions
 
@@ -87,7 +93,7 @@ Edit the cron expression in the workflow file:
 Edit these environment variables in the workflow file:
 - **Discount Days**: Change `DISCOUNT_DAYS: "14"` to different number
 - **Discount Percent**: Change `DISCOUNT_PERCENT: "0.20"` (0.20 = 20%)
-- **Price Name**: Change `CLEARANCE_PRICE_NAME: "Comics Clearance - 20% Off"`
+- **Price Book Name**: Change `PRICE_BOOK_NAME: "Comics Clearance - 20% Off"`
 - **Tag Prefix**: Change `TAG_PREFIX: "new release-"` if you use different tags
 
 ## Viewing Logs
@@ -101,31 +107,45 @@ After each run:
 
 Example log output:
 ```
-LIGHTSPEED COMIC DISCOUNT AUTOMATION
+LIGHTSPEED X-SERIES COMIC DISCOUNT AUTOMATION
 Date: 2025-10-20 09:00:00
 ======================================================================
 
-Fetching items from Lightspeed...
-  Page 1: Fetched 100 items (Total: 100)
-  Page 2: Fetched 45 items (Total: 145)
-Total items fetched: 145
+Fetching products from Lightspeed X-Series...
+  Page 1: Fetched 200 products (Total: 200)
+  Page 2: Fetched 145 products (Total: 345)
+Total products fetched: 345
 
-Analyzing items for clearance eligibility...
+Analyzing products for clearance eligibility...
+(Only checking products with tags)
 
 Analysis Complete:
-  Total items scanned: 145
-  Items without date tags: 89
-  Items eligible for discount: 12
+  Total products scanned: 345
+  Products without any tags: 289
+  Products with tags but no date tag: 44
+  Products eligible for discount: 12
 
-Applying clearance prices...
+Products to receive clearance pricing:
 ----------------------------------------------------------------------
 
 Batman #1
   Tag: new release-2025-09-15
   Age: 35 days
-  Default Price: $4.99
+  Retail Price: $4.99
   Clearance Price: $3.99 (20% off)
-  ✓ Clearance price applied successfully
+
+======================================================================
+Updating price book...
+
+  Successfully updated batch of 12 products
+
+======================================================================
+SUMMARY
+======================================================================
+Successfully added 12 products to price book 'Comics Clearance - 20% Off'
+
+Staff can now select the clearance price book at the POS.
+======================================================================
 ```
 
 ## At the POS
@@ -133,19 +153,19 @@ Batman #1
 When ringing up a comic that has been discounted:
 
 1. **Scan or add the item** to the sale
-2. **POS shows multiple prices** available:
-   - Default: $4.99
-   - Comics Clearance - 20% Off: $3.99
-3. **Staff selects** "Comics Clearance - 20% Off" price
-4. **Customer pays** the discounted price ($3.99)
+2. **Select the price book** from the POS:
+   - Look for "Comics Clearance - 20% Off" price book
+   - Or ask the customer if they want the clearance price
+3. **Staff activates** the clearance price book for that sale
+4. **Customer pays** the discounted price ($3.99 instead of $4.99)
 
 ### Training Your Staff
 
 Make sure your staff knows:
-- Look for comics with the clearance price available
-- Always check if a clearance price is available when selling comics
-- The clearance price preserves the original price (it doesn't change the default)
-- They manually select which price to charge
+- How to activate price books at the POS
+- Check for comics that are in the clearance price book
+- The clearance price book doesn't change the regular retail price
+- They can switch between regular pricing and clearance pricing
 
 ## Troubleshooting
 
@@ -155,42 +175,44 @@ Make sure your staff knows:
 - The workflow file is in the correct location (`.github/workflows/`)
 - The cron schedule is correct for your timezone
 
-### Script runs but no items are discounted
+### Script runs but no products are discounted
 **Possible reasons:**
-1. Items don't have tags in format `new release-YYYY-MM-DD`
-2. Items aren't older than 14 days yet
-3. Items are archived in Lightspeed
-4. Items don't have a default price set
+1. Products don't have any tags at all (script only processes tagged products)
+2. Products don't have tags in format `new release-YYYY-MM-DD`
+3. Products aren't older than 14 days yet
+4. Products don't have a retail price set
 
 **How to debug:**
 - Look at the workflow logs (Actions tab)
-- Check "Items without date tags" count
-- Manually verify a few items in Lightspeed have proper tags
+- Check "Products without any tags" count
+- Check "Products with tags but no date tag" count
+- Manually verify a few products in Lightspeed have proper tags
 
 ### Can't see clearance price at POS
 **Solutions:**
 1. Verify the script ran successfully (check Actions logs for green checkmark)
-2. Check that the item has the clearance price in Lightspeed:
-   - Go to Inventory → Search for item
-   - Look at Pricing section
-   - Should see "Comics Clearance - 20% Off" price
-3. Ensure staff user has permission to view/select multiple price levels
-4. If using Lightspeed desktop app, sync the POS
+2. Check that the price book exists in Lightspeed:
+   - Go to **Setup** → **Price Books**
+   - Look for "Comics Clearance - 20% Off"
+   - Click it to see which products are included
+3. Ensure staff know how to activate price books at the POS
+4. Check that staff have permission to use price books
 
-### API Key or Account ID errors
+### API Token or Domain errors
 **Error message**: `FATAL ERROR: 401 Unauthorized` or `403 Forbidden`
 
 **Solutions:**
-1. Verify your API key is correct in GitHub Secrets
-2. Check that your API key hasn't expired
-3. Ensure your API key has proper permissions (read/write items)
-4. Regenerate API key in Lightspeed if needed
+1. Verify your Personal Access Token is correct in GitHub Secrets
+2. Check that your token hasn't been revoked
+3. Ensure your token has proper permissions (requires Plus plan)
+4. Verify your domain prefix is correct (e.g., `strangeadventures`)
+5. Regenerate token in Lightspeed if needed
 
-### Items are being processed multiple times
+### Products are being processed multiple times
 **This is expected behavior!** The script:
-- Updates existing clearance prices each time it runs
-- Ensures prices stay at 20% off even if default price changes
-- This is safe and won't create duplicate price levels
+- Updates the price book each time it runs
+- Ensures prices stay at 20% off even if retail price changes
+- This is safe and won't create duplicate price books
 
 ## Testing Locally (Optional)
 
@@ -232,12 +254,14 @@ comic-discount-automation/
 ## What Gets Updated
 
 The script:
-- ✅ **Adds** clearance price level to eligible items
-- ✅ **Updates** existing clearance prices if default price changed
-- ✅ **Preserves** original default prices
-- ❌ **Does NOT** modify default prices
-- ❌ **Does NOT** archive items
+- ✅ **Adds** products to clearance price book
+- ✅ **Updates** price book with new clearance prices if retail prices changed
+- ✅ **Preserves** original retail prices
+- ✅ **Only processes** products that have tags
+- ❌ **Does NOT** modify retail prices
+- ❌ **Does NOT** archive products
 - ❌ **Does NOT** remove tags
+- ❌ **Does NOT** affect products without tags
 
 ## Security Notes
 
