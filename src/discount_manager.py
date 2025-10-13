@@ -116,9 +116,8 @@ class LightspeedXSeriesDiscountManager:
             # Create new price book if it doesn't exist
             print(f"Creating new price book: {self.price_book_name}")
             new_price_book = {
-                "name": self.price_book_name,
-                "outlet_ids": [],  # Apply to all outlets
-                "customer_group_ids": []  # Apply to all customer groups
+                "name": self.price_book_name
+                # Omit outlet_ids and customer_group_ids to apply to all
             }
 
             response = requests.post(
