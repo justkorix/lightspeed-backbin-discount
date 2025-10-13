@@ -93,6 +93,32 @@ class LightspeedXSeriesDiscountManager:
             print(f"  Error fetching tags for product {product_id}: {e}")
             return []
 
+    def get_outlets_and_groups(self):
+        """
+        Fetch outlet and customer group IDs
+        Returns (outlet_ids, customer_group_ids)
+        """
+        outlet_ids = []
+        customer_group_ids = []
+
+        try:
+            # Fetch outlets
+            response = requests.get(f"{self.base_url}/outlets", headers=self.headers)
+            response.raise_for_status()
+            outlets = response.json().get('data', [])
+            outlet_ids = [o['id'] for o in outlets]
+
+            # Fetch customer groups
+            response = requests.get(f"{self.base_url}/customer_groups", headers=self.headers)
+            response.raise_for_status()
+            groups = response.json().get('data', [])
+            customer_group_ids = [g['id'] for g in groups]
+
+        except requests.exceptions.RequestException as e:
+            print(f"Warning: Could not fetch outlets/groups: {e}")
+
+        return outlet_ids, customer_group_ids
+
     def get_or_create_price_book(self) -> Optional[str]:
         """
         Get existing clearance price book or create one
@@ -115,9 +141,14 @@ class LightspeedXSeriesDiscountManager:
 
             # Create new price book if it doesn't exist
             print(f"Creating new price book: {self.price_book_name}")
+
+            # Get outlet and customer group IDs
+            outlet_ids, customer_group_ids = self.get_outlets_and_groups()
+
             new_price_book = {
-                "name": self.price_book_name
-                # Omit outlet_ids and customer_group_ids to apply to all
+                "name": self.price_book_name,
+                "outlet_ids": outlet_ids,
+                "customer_group_ids": customer_group_ids
             }
 
             response = requests.post(
