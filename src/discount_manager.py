@@ -194,16 +194,17 @@ class LightspeedXSeriesDiscountManager:
         print(f"    Name: {test_product['name']}")
         print(f"    Clearance Price: {test_product['clearance_price']}")
 
-        # Try 1: Single product in array
+        # Try 1: With price_book_id (snake_case)
         payload1 = {
             "data": [{
                 "product_id": test_product['id'],
+                "price_book_id": price_book_id,
                 "price": test_product['clearance_price'],
                 "tax_id": "06a3b11e-224f-11f0-ecdc-893f1c70d9b9"
             }]
         }
 
-        print(f"\n  DEBUG: Trying payload format 1 (array with single product):")
+        print(f"\n  DEBUG: Test 1 - With price_book_id (snake_case):")
         print(f"  {json.dumps(payload1, indent=2)}")
 
         try:
@@ -218,18 +219,23 @@ class LightspeedXSeriesDiscountManager:
                 print(f"  Response body: {response.text[:500]}")
 
             response.raise_for_status()
-            print(f"  ✓ Format 1 worked!")
+            print(f"  ✓ Test 1 worked!")
 
         except requests.exceptions.RequestException as e:
-            print(f"  ✗ Format 1 failed: {e}")
+            print(f"  ✗ Test 1 failed: {e}")
+            if hasattr(e, 'response') and e.response is not None and e.response.status_code != 500:
+                print(f"  Response body: {e.response.text[:300]}")
 
-            # Try 2: Without the "data" wrapper
-            print(f"\n  DEBUG: Trying payload format 2 (direct array, no wrapper):")
-            payload2 = [{
-                "product_id": test_product['id'],
-                "price": test_product['clearance_price'],
-                "tax_id": "06a3b11e-224f-11f0-ecdc-893f1c70d9b9"
-            }]
+            # Try 2: camelCase field names
+            print(f"\n  DEBUG: Test 2 - camelCase field names:")
+            payload2 = {
+                "data": [{
+                    "productId": test_product['id'],
+                    "priceBookId": price_book_id,
+                    "price": test_product['clearance_price'],
+                    "taxId": "06a3b11e-224f-11f0-ecdc-893f1c70d9b9"
+                }]
+            }
             print(f"  {json.dumps(payload2, indent=2)}")
 
             try:
@@ -244,17 +250,21 @@ class LightspeedXSeriesDiscountManager:
                     print(f"  Response body: {response.text[:500]}")
 
                 response.raise_for_status()
-                print(f"  ✓ Format 2 worked!")
+                print(f"  ✓ Test 2 worked!")
 
             except requests.exceptions.RequestException as e:
-                print(f"  ✗ Format 2 failed: {e}")
+                print(f"  ✗ Test 2 failed: {e}")
+                if hasattr(e, 'response') and e.response is not None and e.response.status_code != 500:
+                    print(f"  Response body: {e.response.text[:300]}")
 
-                # Try 3: Single object (not array)
-                print(f"\n  DEBUG: Trying payload format 3 (single object, not array):")
+                # Try 3: Without price_book_id again
+                print(f"\n  DEBUG: Test 3 - Without price_book_id in payload:")
                 payload3 = {
-                    "product_id": test_product['id'],
-                    "price": test_product['clearance_price'],
-                    "tax_id": "06a3b11e-224f-11f0-ecdc-893f1c70d9b9"
+                    "data": [{
+                        "product_id": test_product['id'],
+                        "price": test_product['clearance_price'],
+                        "tax_id": "06a3b11e-224f-11f0-ecdc-893f1c70d9b9"
+                    }]
                 }
                 print(f"  {json.dumps(payload3, indent=2)}")
 
@@ -270,14 +280,16 @@ class LightspeedXSeriesDiscountManager:
                         print(f"  Response body: {response.text[:500]}")
 
                     response.raise_for_status()
-                    print(f"  ✓ Format 3 worked!")
+                    print(f"  ✓ Test 3 worked!")
 
                 except requests.exceptions.RequestException as e:
-                    print(f"  ✗ Format 3 also failed: {e}")
-                    print("\n  All three payload formats failed!")
-                    print("  Please check the API documentation at:")
-                    print("  https://x-series-api.lightspeedhq.com/reference")
-                    print("  Look for 'Add Products to Price Book' endpoint")
+                    print(f"  ✗ Test 3 also failed: {e}")
+                    if hasattr(e, 'response') and e.response is not None:
+                        print(f"  Response body: {e.response.text[:300]}")
+
+                    print("\n  All three tests failed!")
+                    print("  The API documentation may have different requirements.")
+                    print("  Check: https://x-series-api.lightspeedhq.com/reference")
                     return False
 
         # If we get here, one of the formats worked
