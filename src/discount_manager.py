@@ -242,6 +242,9 @@ class LightspeedXSeriesDiscountManager:
         print("(Only checking products with tags)")
         print()
 
+        # Debug: Show first few product tags
+        debug_count = 0
+
         for product in products:
             product_id = product.get('id')
             product_name = product.get('name', 'Unknown')
@@ -257,6 +260,12 @@ class LightspeedXSeriesDiscountManager:
             if not tags:
                 items_without_tags += 1
                 continue
+
+            # Debug: Show first 5 products with tags
+            if debug_count < 5:
+                print(f"DEBUG - Product: {product_name}")
+                print(f"  Tags: {[t.get('name', 'NO_NAME') for t in tags]}")
+                debug_count += 1
 
             # Look for date tags
             release_date = None
