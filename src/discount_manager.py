@@ -208,17 +208,24 @@ class LightspeedXSeriesDiscountManager:
                 if price_book_products:
                     print(f"  DEBUG: Sending {len(price_book_products)} products to price book")
                     print(f"  DEBUG: First product example: {json.dumps(price_book_products[0], indent=2)}")
+                    print(f"  DEBUG: Full payload for first 2 products: {json.dumps({'products': price_book_products[:2]}, indent=2)}")
 
-                # Create headers without Content-Type (let requests set it via json= parameter)
-                headers_without_content_type = {
-                    "Authorization": self.headers["Authorization"]
+                # Manually construct the request with explicit data and headers
+                json_data = json.dumps(payload)
+                request_headers = {
+                    "Authorization": self.headers["Authorization"],
+                    "Content-Type": "application/json",
+                    "Content-Length": str(len(json_data))
                 }
 
-                # Use PATCH with correct field name "price" instead of "retail_price"
+                print(f"  DEBUG: Content-Length: {len(json_data)}")
+                print(f"  DEBUG: Request headers: {request_headers}")
+
+                # Use PATCH with explicit data string and all headers
                 response = requests.patch(
                     f"{self.base_url}/price_books/{price_book_id}/products",
-                    headers=headers_without_content_type,
-                    json=payload
+                    headers=request_headers,
+                    data=json_data
                 )
                 response.raise_for_status()
                 print(f"  Successfully updated batch of {len(batch)} products")
