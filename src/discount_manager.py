@@ -183,9 +183,7 @@ class LightspeedXSeriesDiscountManager:
         if not products_to_add:
             return True
 
-        # Use API 3.0 for price books (same as creation)
-        base_url_v3 = self.base_url.replace('/api/2.0', '/api/3.0')
-
+        # Use API 2.0 for updating price book products (API 3.0 only for creation)
         # Process in batches of 100
         batch_size = 100
         success = True
@@ -202,13 +200,13 @@ class LightspeedXSeriesDiscountManager:
                         "retail_price": str(product['clearance_price'])  # Must be string
                     })
 
-                payload = {"price_book_products": price_book_products}
                 print(f"  DEBUG: Sending {len(price_book_products)} products to price book")
 
-                response = requests.patch(
-                    f"{base_url_v3}/price_books/{price_book_id}/products",
+                # Use PUT instead of PATCH for API 2.0
+                response = requests.put(
+                    f"{self.base_url}/price_books/{price_book_id}/products",
                     headers=self.headers,
-                    json=payload
+                    json=price_book_products  # Send array directly, not wrapped
                 )
                 response.raise_for_status()
                 print(f"  Successfully updated batch of {len(batch)} products")
