@@ -79,19 +79,19 @@ class LightspeedXSeriesDiscountManager:
         print(f"Total products fetched: {len(products)}\n")
         return products
 
-    def get_product_tags(self, product_id: str) -> List[Dict]:
+    def get_all_tags(self) -> Dict[str, Dict]:
         """
-        Fetch tags for a specific product
+        Fetch all tags and return as a dictionary keyed by tag ID
         """
         try:
-            url = f"{self.base_url}/products/{product_id}/tags"
-            response = requests.get(url, headers=self.headers)
+            response = requests.get(f"{self.base_url}/tags", headers=self.headers)
             response.raise_for_status()
-            data = response.json()
-            return data.get('data', [])
+            tags_list = response.json().get('data', [])
+            # Create a dictionary for fast lookup
+            return {tag['id']: tag for tag in tags_list}
         except requests.exceptions.RequestException as e:
-            print(f"  Error fetching tags for product {product_id}: {e}")
-            return []
+            print(f"Error fetching tags: {e}")
+            return {}
 
     def get_outlets_and_groups(self):
         """
@@ -233,6 +233,11 @@ class LightspeedXSeriesDiscountManager:
         # Fetch all products
         products = self.get_all_products()
 
+        # Fetch all tags once
+        print("Fetching all tags...")
+        all_tags = self.get_all_tags()
+        print(f"Total tags fetched: {len(all_tags)}\n")
+
         today = datetime.now()
         items_to_discount = []
         items_without_tags = 0
@@ -242,9 +247,6 @@ class LightspeedXSeriesDiscountManager:
         print("Analyzing products for clearance eligibility...")
         print("(Only checking products with tags)")
         print()
-
-        # Debug: Show first few products
-        debug_count = 0
 
         for product in products:
             product_id = product.get('id')
@@ -262,23 +264,25 @@ class LightspeedXSeriesDiscountManager:
                 items_skipped_no_price += 1
                 continue
 
-            # Get product tags
-            tags = self.get_product_tags(product_id)
+            # Get product tag IDs from product data
+            tag_ids = product.get('tag_ids', [])
 
-            if not tags:
+            if not tag_ids:
                 items_without_tags += 1
                 continue
 
-            # Look for date tags
+            # Look for date tags using tag IDs
             release_date = None
             date_tag = None
-            for tag_data in tags:
-                tag_name = tag_data.get('name', '')
-                if tag_name.startswith(self.tag_prefix):
-                    release_date = self.extract_date_from_tag(tag_name)
-                    if release_date:
-                        date_tag = tag_name
-                        break
+            for tag_id in tag_ids:
+                tag_data = all_tags.get(tag_id)
+                if tag_data:
+                    tag_name = tag_data.get('name', '')
+                    if tag_name.startswith(self.tag_prefix):
+                        release_date = self.extract_date_from_tag(tag_name)
+                        if release_date:
+                            date_tag = tag_name
+                            break
 
             if not release_date:
                 items_without_date_tags += 1
