@@ -197,10 +197,12 @@ class LightspeedXSeriesDiscountManager:
                 for product in batch:
                     price_book_products.append({
                         "product_id": product['id'],
-                        "retail_price": product['clearance_price']  # Must be number
+                        "price": product['clearance_price']  # Field is "price", not "retail_price"
                     })
 
                 import json
+
+                payload = {"products": price_book_products}
 
                 # Debug: Print first product to verify format
                 if price_book_products:
@@ -212,12 +214,11 @@ class LightspeedXSeriesDiscountManager:
                     "Authorization": self.headers["Authorization"]
                 }
 
-                # Try sending the array directly without wrapping in {"products": ...}
-                print(f"  DEBUG: Sending unwrapped array directly")
-                response = requests.post(
+                # Use PATCH with correct field name "price" instead of "retail_price"
+                response = requests.patch(
                     f"{self.base_url}/price_books/{price_book_id}/products",
                     headers=headers_without_content_type,
-                    json=price_book_products  # Send array directly
+                    json=payload
                 )
                 response.raise_for_status()
                 print(f"  Successfully updated batch of {len(batch)} products")
