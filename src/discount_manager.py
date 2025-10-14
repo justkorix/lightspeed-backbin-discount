@@ -251,11 +251,11 @@ class LightspeedXSeriesDiscountManager:
             product_name = product.get('name', 'Unknown')
             retail_price = float(product.get('retail_price', 0))
 
-            # Debug: Show first 10 products
-            if debug_count < 10:
+            # Debug: Show first 3 products with full data
+            if debug_count < 3:
                 print(f"DEBUG - Product: {product_name}")
-                print(f"  ID: {product_id}")
-                print(f"  Retail Price: {retail_price}")
+                print(f"  Full product data keys: {list(product.keys())}")
+                print(f"  Sample data: {product}")
                 debug_count += 1
 
             # Skip products without a retail price
