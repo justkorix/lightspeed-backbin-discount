@@ -183,63 +183,82 @@ class LightspeedXSeriesDiscountManager:
         if not products_to_add:
             return True
 
-        # Use API 2.0 for updating price book products (API 3.0 only for creation)
-        # Process in batches of 100
-        batch_size = 100
-        success = True
+        import json
 
-        for i in range(0, len(products_to_add), batch_size):
-            batch = products_to_add[i:i + batch_size]
+        # Test with just the first 2 products to debug
+        print("  DEBUG: Testing with first 2 products only...")
+        test_products = products_to_add[:2]
 
-            try:
-                # Format products for price book API
-                price_book_products = []
-                for product in batch:
-                    product_entry = {
-                        "product_id": product['id'],
-                        "price_book_id": price_book_id,
-                        "price": product['clearance_price'],
-                        "tax_id": "06a3b11e-224f-11f0-ecdc-893f1c70d9b9"  # Required tax_id
-                    }
-                    price_book_products.append(product_entry)
+        # Format products for price book API - simplified without price_book_id in payload
+        price_book_products = []
+        for product in test_products:
+            product_entry = {
+                "product_id": product['id'],
+                "price": product['clearance_price'],
+                "tax_id": "06a3b11e-224f-11f0-ecdc-893f1c70d9b9"
+            }
+            price_book_products.append(product_entry)
 
-                import json
+        payload = {"data": price_book_products}
 
-                payload = {"data": price_book_products}  # Wrapper is "data", not "products"!
+        print(f"  DEBUG: Simplified payload (no price_book_id in entries):")
+        print(f"  {json.dumps(payload, indent=2)}")
 
-                # Debug: Print first product to verify format
-                if price_book_products:
-                    print(f"  DEBUG: Sending {len(price_book_products)} products to price book")
-                    print(f"  DEBUG: First product example: {json.dumps(price_book_products[0], indent=2)}")
-                    print(f"  DEBUG: Full payload for first 2 products: {json.dumps({'data': price_book_products[:2]}, indent=2)}")
+        try:
+            # Use requests.post with json parameter (cleaner than manual serialization)
+            response = requests.post(
+                f"{self.base_url}/price_books/{price_book_id}/products",
+                headers=self.headers,
+                json=payload
+            )
 
-                # Manually construct the request with explicit data and headers
-                json_data = json.dumps(payload)
-                request_headers = {
-                    "Authorization": self.headers["Authorization"],
-                    "Content-Type": "application/json",
-                    "Content-Length": str(len(json_data))
-                }
+            print(f"  DEBUG: Response status: {response.status_code}")
+            print(f"  DEBUG: Response headers: {dict(response.headers)}")
+            print(f"  DEBUG: Response body: {response.text[:500]}")
 
-                print(f"  DEBUG: Content-Length: {len(json_data)}")
-                print(f"  DEBUG: Request headers: {request_headers}")
+            response.raise_for_status()
+            print(f"  ✓ Successfully added test products!")
 
-                # Use POST (as shown in API docs) with explicit data string and all headers
-                response = requests.post(
-                    f"{self.base_url}/price_books/{price_book_id}/products",
-                    headers=request_headers,
-                    data=json_data
-                )
-                response.raise_for_status()
-                print(f"  Successfully updated batch of {len(batch)} products")
+            # If test succeeds, process the rest in batches
+            print("\n  Test successful! Now processing all products in batches...")
+            batch_size = 100
+            success = True
 
-            except requests.exceptions.RequestException as e:
-                print(f"  Error updating price book batch: {e}")
-                if hasattr(e.response, 'text'):
-                    print(f"  Response: {e.response.text}")
-                success = False
+            for i in range(0, len(products_to_add), batch_size):
+                batch = products_to_add[i:i + batch_size]
 
-        return success
+                try:
+                    batch_products = []
+                    for product in batch:
+                        product_entry = {
+                            "product_id": product['id'],
+                            "price": product['clearance_price'],
+                            "tax_id": "06a3b11e-224f-11f0-ecdc-893f1c70d9b9"
+                        }
+                        batch_products.append(product_entry)
+
+                    response = requests.post(
+                        f"{self.base_url}/price_books/{price_book_id}/products",
+                        headers=self.headers,
+                        json={"data": batch_products}
+                    )
+                    response.raise_for_status()
+                    print(f"  Successfully updated batch {i//batch_size + 1} ({len(batch)} products)")
+
+                except requests.exceptions.RequestException as e:
+                    print(f"  Error updating batch {i//batch_size + 1}: {e}")
+                    if hasattr(e.response, 'text'):
+                        print(f"  Response: {e.response.text[:200]}")
+                    success = False
+
+            return success
+
+        except requests.exceptions.RequestException as e:
+            print(f"  ✗ Test failed with error: {e}")
+            if hasattr(e, 'response') and e.response is not None:
+                print(f"  Response status: {e.response.status_code}")
+                print(f"  Response body: {e.response.text[:500]}")
+            return False
 
     def process_aged_items(self):
         """
