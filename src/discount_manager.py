@@ -66,10 +66,12 @@ class LightspeedXSeriesDiscountManager:
                 # Debug: Print first product structure to see available fields
                 if not debug_printed and page_products:
                     import json
-                    print(f"\n  DEBUG: Sample product fields:")
+                    print(f"\n  DEBUG: Sample product from list API:")
                     sample = page_products[0]
-                    tax_related_fields = {k: v for k, v in sample.items() if 'tax' in k.lower()}
-                    print(f"  Tax-related fields: {json.dumps(tax_related_fields, indent=2)}")
+                    print(f"  All fields: {list(sample.keys())}")
+                    print(f"  Price-related fields:")
+                    price_fields = {k: v for k, v in sample.items() if 'price' in k.lower() or 'tax' in k.lower()}
+                    print(f"  {json.dumps(price_fields, indent=4)}")
                     print()
                     debug_printed = True
 
