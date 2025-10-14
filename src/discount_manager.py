@@ -200,13 +200,21 @@ class LightspeedXSeriesDiscountManager:
                         "retail_price": product['clearance_price']  # Must be number
                     })
 
-                print(f"  DEBUG: Sending {len(price_book_products)} products to price book")
+                payload = {"products": price_book_products}
+
+                # Debug: Print first product to verify format
+                if price_book_products:
+                    import json
+                    print(f"  DEBUG: Sending {len(price_book_products)} products to price book")
+                    print(f"  DEBUG: First product example: {json.dumps(price_book_products[0], indent=2)}")
+                    print(f"  DEBUG: product_id type: {type(price_book_products[0]['product_id'])}")
+                    print(f"  DEBUG: retail_price type: {type(price_book_products[0]['retail_price'])}")
 
                 # Use PATCH with products wrapped in object
                 response = requests.patch(
                     f"{self.base_url}/price_books/{price_book_id}/products",
                     headers=self.headers,
-                    json={"products": price_book_products}  # Wrap array in products key
+                    json=payload
                 )
                 response.raise_for_status()
                 print(f"  Successfully updated batch of {len(batch)} products")
