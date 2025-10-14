@@ -214,10 +214,15 @@ class LightspeedXSeriesDiscountManager:
                 print(f"  DEBUG: Headers: {self.headers}")
                 print(f"  DEBUG: Payload preview (first 500 chars): {json.dumps(payload)[:500]}...")
 
-                # Use PATCH with json parameter (requests handles serialization)
+                # Create headers without Content-Type (let requests set it via json= parameter)
+                headers_without_content_type = {
+                    "Authorization": self.headers["Authorization"]
+                }
+
+                # Use PATCH with json parameter (requests automatically sets Content-Type)
                 response = requests.patch(
                     f"{self.base_url}/price_books/{price_book_id}/products",
-                    headers=self.headers,
+                    headers=headers_without_content_type,
                     json=payload
                 )
                 response.raise_for_status()
