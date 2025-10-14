@@ -204,13 +204,13 @@ class LightspeedXSeriesDiscountManager:
 
                 import json
 
-                payload = {"products": price_book_products}
+                payload = {"data": price_book_products}  # Wrapper is "data", not "products"!
 
                 # Debug: Print first product to verify format
                 if price_book_products:
                     print(f"  DEBUG: Sending {len(price_book_products)} products to price book")
                     print(f"  DEBUG: First product example: {json.dumps(price_book_products[0], indent=2)}")
-                    print(f"  DEBUG: Full payload for first 2 products: {json.dumps({'products': price_book_products[:2]}, indent=2)}")
+                    print(f"  DEBUG: Full payload for first 2 products: {json.dumps({'data': price_book_products[:2]}, indent=2)}")
 
                 # Manually construct the request with explicit data and headers
                 json_data = json.dumps(payload)
@@ -223,8 +223,8 @@ class LightspeedXSeriesDiscountManager:
                 print(f"  DEBUG: Content-Length: {len(json_data)}")
                 print(f"  DEBUG: Request headers: {request_headers}")
 
-                # Use PATCH with explicit data string and all headers
-                response = requests.patch(
+                # Use POST (as shown in API docs) with explicit data string and all headers
+                response = requests.post(
                     f"{self.base_url}/price_books/{price_book_id}/products",
                     headers=request_headers,
                     data=json_data
