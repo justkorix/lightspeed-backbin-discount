@@ -193,14 +193,15 @@ class LightspeedXSeriesDiscountManager:
         print(f"    ID: {test_product['id']}")
         print(f"    Name: {test_product['name']}")
         print(f"    Clearance Price: {test_product['clearance_price']}")
+        print(f"    Tax ID: {test_product.get('tax_id', 'None')}")
 
-        # Try 1: With price_book_id (snake_case)
+        # Try 1: Using product's actual tax_id (with price_book_id)
         payload1 = {
             "data": [{
                 "product_id": test_product['id'],
                 "price_book_id": price_book_id,
                 "price": test_product['clearance_price'],
-                "tax_id": "06a3b11e-224f-11f0-ecdc-893f1c70d9b9"
+                "tax_id": test_product.get('tax_id')
             }]
         }
 
@@ -226,14 +227,14 @@ class LightspeedXSeriesDiscountManager:
             if hasattr(e, 'response') and e.response is not None and e.response.status_code != 500:
                 print(f"  Response body: {e.response.text[:300]}")
 
-            # Try 2: camelCase field names
+            # Try 2: camelCase field names (with product's tax_id)
             print(f"\n  DEBUG: Test 2 - camelCase field names:")
             payload2 = {
                 "data": [{
                     "productId": test_product['id'],
                     "priceBookId": price_book_id,
                     "price": test_product['clearance_price'],
-                    "taxId": "06a3b11e-224f-11f0-ecdc-893f1c70d9b9"
+                    "taxId": test_product.get('tax_id')
                 }]
             }
             print(f"  {json.dumps(payload2, indent=2)}")
@@ -257,13 +258,13 @@ class LightspeedXSeriesDiscountManager:
                 if hasattr(e, 'response') and e.response is not None and e.response.status_code != 500:
                     print(f"  Response body: {e.response.text[:300]}")
 
-                # Try 3: Without price_book_id again
+                # Try 3: Without price_book_id (using product's tax_id)
                 print(f"\n  DEBUG: Test 3 - Without price_book_id in payload:")
                 payload3 = {
                     "data": [{
                         "product_id": test_product['id'],
                         "price": test_product['clearance_price'],
-                        "tax_id": "06a3b11e-224f-11f0-ecdc-893f1c70d9b9"
+                        "tax_id": test_product.get('tax_id')
                     }]
                 }
                 print(f"  {json.dumps(payload3, indent=2)}")
@@ -306,7 +307,7 @@ class LightspeedXSeriesDiscountManager:
                     product_entry = {
                         "product_id": product['id'],
                         "price": product['clearance_price'],
-                        "tax_id": "06a3b11e-224f-11f0-ecdc-893f1c70d9b9"
+                        "tax_id": product.get('tax_id')
                     }
                     batch_products.append(product_entry)
 
