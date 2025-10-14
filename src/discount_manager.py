@@ -201,29 +201,23 @@ class LightspeedXSeriesDiscountManager:
                     })
 
                 import json
-                payload = {"products": price_book_products}
 
                 # Debug: Print first product to verify format
                 if price_book_products:
                     print(f"  DEBUG: Sending {len(price_book_products)} products to price book")
                     print(f"  DEBUG: First product example: {json.dumps(price_book_products[0], indent=2)}")
-                    print(f"  DEBUG: product_id type: {type(price_book_products[0]['product_id'])}")
-                    print(f"  DEBUG: retail_price type: {type(price_book_products[0]['retail_price'])}")
-
-                # Debug: Show exact headers being sent
-                print(f"  DEBUG: Headers: {self.headers}")
-                print(f"  DEBUG: Payload preview (first 500 chars): {json.dumps(payload)[:500]}...")
 
                 # Create headers without Content-Type (let requests set it via json= parameter)
                 headers_without_content_type = {
                     "Authorization": self.headers["Authorization"]
                 }
 
-                # Use POST to add products to price book (PATCH was giving "no body" errors)
+                # Try sending the array directly without wrapping in {"products": ...}
+                print(f"  DEBUG: Sending unwrapped array directly")
                 response = requests.post(
                     f"{self.base_url}/price_books/{price_book_id}/products",
                     headers=headers_without_content_type,
-                    json=payload
+                    json=price_book_products  # Send array directly
                 )
                 response.raise_for_status()
                 print(f"  Successfully updated batch of {len(batch)} products")
