@@ -249,14 +249,13 @@ class LightspeedXSeriesDiscountManager:
         for product in products:
             product_id = product.get('id')
             product_name = product.get('name', 'Unknown')
-            retail_price = float(product.get('retail_price', 0))
 
-            # Debug: Show first 3 products with full data
-            if debug_count < 3:
-                print(f"DEBUG - Product: {product_name}")
-                print(f"  Full product data keys: {list(product.keys())}")
-                print(f"  Sample data: {product}")
-                debug_count += 1
+            # X-Series uses price_including_tax or price_excluding_tax
+            retail_price = product.get('price_including_tax') or product.get('price_excluding_tax') or 0
+            if retail_price:
+                retail_price = float(retail_price)
+            else:
+                retail_price = 0.0
 
             # Skip products without a retail price
             if retail_price <= 0:
@@ -290,6 +289,7 @@ class LightspeedXSeriesDiscountManager:
 
             # Check if item should be discounted
             if days_old > self.discount_days:
+                # Use the same price format that was in the original product
                 clearance_price = round(retail_price * (1 - self.discount_percent), 2)
 
                 items_to_discount.append({
