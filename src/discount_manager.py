@@ -195,10 +195,14 @@ class LightspeedXSeriesDiscountManager:
                 # Format products for price book API
                 price_book_products = []
                 for product in batch:
-                    price_book_products.append({
+                    product_entry = {
                         "product_id": product['id'],
                         "price": product['clearance_price']  # Field is "price", not "retail_price"
-                    })
+                    }
+                    # Add tax_id if it exists
+                    if product.get('tax_id'):
+                        product_entry['tax_id'] = product['tax_id']
+                    price_book_products.append(product_entry)
 
                 import json
 
@@ -287,6 +291,9 @@ class LightspeedXSeriesDiscountManager:
                 items_skipped_no_price += 1
                 continue
 
+            # Get tax_id if it exists
+            tax_id = product.get('tax_id')
+
             # Get product tag IDs from product data
             tag_ids = product.get('tag_ids', [])
 
@@ -326,7 +333,8 @@ class LightspeedXSeriesDiscountManager:
                     'retail_price': retail_price,
                     'clearance_price': clearance_price,
                     'release_date': release_date,
-                    'date_tag': date_tag
+                    'date_tag': date_tag,
+                    'tax_id': tax_id
                 })
 
         print(f"Analysis Complete:")
