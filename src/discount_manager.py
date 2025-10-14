@@ -124,10 +124,13 @@ class LightspeedXSeriesDiscountManager:
         Get existing clearance price book or create one
         Returns the price_book_id
         """
+        # Use API 3.0 for price books
+        base_url_v3 = self.base_url.replace('/api/2.0', '/api/3.0')
+
         try:
             # Check for existing price book
             response = requests.get(
-                f"{self.base_url}/price_books",
+                f"{base_url_v3}/price_books",
                 headers=self.headers
             )
             response.raise_for_status()
@@ -155,7 +158,7 @@ class LightspeedXSeriesDiscountManager:
             print(f"  Request payload: {new_price_book}")
 
             response = requests.post(
-                f"{self.base_url}/price_books",
+                f"{base_url_v3}/price_books",
                 headers=self.headers,
                 json=new_price_book
             )
