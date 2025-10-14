@@ -237,12 +237,13 @@ class LightspeedXSeriesDiscountManager:
         items_to_discount = []
         items_without_tags = 0
         items_without_date_tags = 0
+        items_skipped_no_price = 0
 
         print("Analyzing products for clearance eligibility...")
         print("(Only checking products with tags)")
         print()
 
-        # Debug: Show first few product tags
+        # Debug: Show first few products
         debug_count = 0
 
         for product in products:
@@ -250,8 +251,16 @@ class LightspeedXSeriesDiscountManager:
             product_name = product.get('name', 'Unknown')
             retail_price = float(product.get('retail_price', 0))
 
+            # Debug: Show first 10 products
+            if debug_count < 10:
+                print(f"DEBUG - Product: {product_name}")
+                print(f"  ID: {product_id}")
+                print(f"  Retail Price: {retail_price}")
+                debug_count += 1
+
             # Skip products without a retail price
             if retail_price <= 0:
+                items_skipped_no_price += 1
                 continue
 
             # Get product tags
@@ -260,12 +269,6 @@ class LightspeedXSeriesDiscountManager:
             if not tags:
                 items_without_tags += 1
                 continue
-
-            # Debug: Show first 5 products with tags
-            if debug_count < 5:
-                print(f"DEBUG - Product: {product_name}")
-                print(f"  Tags: {[t.get('name', 'NO_NAME') for t in tags]}")
-                debug_count += 1
 
             # Look for date tags
             release_date = None
@@ -301,6 +304,7 @@ class LightspeedXSeriesDiscountManager:
 
         print(f"Analysis Complete:")
         print(f"  Total products scanned: {len(products)}")
+        print(f"  Products skipped (no retail price): {items_skipped_no_price}")
         print(f"  Products without any tags: {items_without_tags}")
         print(f"  Products with tags but no date tag: {items_without_date_tags}")
         print(f"  Products eligible for discount: {len(items_to_discount)}")
