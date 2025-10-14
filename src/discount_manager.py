@@ -196,13 +196,16 @@ class LightspeedXSeriesDiscountManager:
                 for product in batch:
                     price_book_products.append({
                         "product_id": product['id'],
-                        "retail_price": product['clearance_price']
+                        "retail_price": str(product['clearance_price'])  # Must be string
                     })
+
+                payload = {"price_book_products": price_book_products}
+                print(f"  DEBUG: Sending {len(price_book_products)} products to price book")
 
                 response = requests.patch(
                     f"{self.base_url}/price_books/{price_book_id}/products",
                     headers=self.headers,
-                    json={"price_book_products": price_book_products}
+                    json=payload
                 )
                 response.raise_for_status()
                 print(f"  Successfully updated batch of {len(batch)} products")
