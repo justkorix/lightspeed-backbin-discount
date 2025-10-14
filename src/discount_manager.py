@@ -197,6 +197,7 @@ class LightspeedXSeriesDiscountManager:
                 for product in batch:
                     product_entry = {
                         "product_id": product['id'],
+                        "price_book_id": price_book_id,
                         "price": product['clearance_price'],
                         "tax_id": "06a3b11e-224f-11f0-ecdc-893f1c70d9b9"  # Required tax_id
                     }
