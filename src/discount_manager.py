@@ -46,7 +46,8 @@ class LightspeedXSeriesDiscountManager:
         url = f"{self.base_url}/products"
         params = {
             'page_size': 200,
-            'after': 0
+            'after': 0,
+            'include_price': 'true'  # Try to include pricing in response
         }
 
         print("Fetching products from Lightspeed X-Series...")
@@ -381,11 +382,8 @@ class LightspeedXSeriesDiscountManager:
             product_id = product.get('id')
             product_name = product.get('name', 'Unknown')
 
-            # X-Series stores price and tax_id in price_standard object
-            price_standard = product.get('price_standard', {})
-
-            # Use tax_inclusive first (what customer pays), fall back to tax_exclusive
-            retail_price = price_standard.get('tax_inclusive') or price_standard.get('tax_exclusive') or 0
+            # List API returns price at top level (not in price_standard)
+            retail_price = product.get('price_including_tax') or product.get('price_excluding_tax') or 0
             if retail_price:
                 retail_price = float(retail_price)
             else:
@@ -396,8 +394,8 @@ class LightspeedXSeriesDiscountManager:
                 items_skipped_no_price += 1
                 continue
 
-            # Get tax_id from price_standard
-            tax_id = price_standard.get('tax_id')
+            # tax_id is NOT in list API response, we'll use default fallback later
+            tax_id = None
 
             # Get product tag IDs from product data
             tag_ids = product.get('tag_ids', [])
