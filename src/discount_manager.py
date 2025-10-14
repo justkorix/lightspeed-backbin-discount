@@ -183,6 +183,9 @@ class LightspeedXSeriesDiscountManager:
         if not products_to_add:
             return True
 
+        # Use API 3.0 for price books (same as creation)
+        base_url_v3 = self.base_url.replace('/api/2.0', '/api/3.0')
+
         # Process in batches of 100
         batch_size = 100
         success = True
@@ -203,7 +206,7 @@ class LightspeedXSeriesDiscountManager:
                 print(f"  DEBUG: Sending {len(price_book_products)} products to price book")
 
                 response = requests.patch(
-                    f"{self.base_url}/price_books/{price_book_id}/products",
+                    f"{base_url_v3}/price_books/{price_book_id}/products",
                     headers=self.headers,
                     json=payload
                 )
