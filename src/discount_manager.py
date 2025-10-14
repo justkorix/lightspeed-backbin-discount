@@ -189,19 +189,23 @@ class LightspeedXSeriesDiscountManager:
         print("  DEBUG: Testing with SINGLE product first...")
         test_product = products_to_add[0]
 
+        # Use default tax_id if product doesn't have one
+        default_tax_id = "06a3b11e-224f-11f0-ecdc-893f1c70d9b9"
+        product_tax_id = test_product.get('tax_id') or default_tax_id
+
         print(f"  DEBUG: Test product details:")
         print(f"    ID: {test_product['id']}")
         print(f"    Name: {test_product['name']}")
         print(f"    Clearance Price: {test_product['clearance_price']}")
-        print(f"    Tax ID: {test_product.get('tax_id', 'None')}")
+        print(f"    Tax ID: {product_tax_id} {'(default)' if not test_product.get('tax_id') else '(from product)'}")
 
-        # Try 1: Using product's actual tax_id (with price_book_id)
+        # Try 1: Using product's tax_id (with fallback to default)
         payload1 = {
             "data": [{
                 "product_id": test_product['id'],
                 "price_book_id": price_book_id,
                 "price": test_product['clearance_price'],
-                "tax_id": test_product.get('tax_id')
+                "tax_id": product_tax_id
             }]
         }
 
@@ -227,14 +231,14 @@ class LightspeedXSeriesDiscountManager:
             if hasattr(e, 'response') and e.response is not None and e.response.status_code != 500:
                 print(f"  Response body: {e.response.text[:300]}")
 
-            # Try 2: camelCase field names (with product's tax_id)
+            # Try 2: camelCase field names
             print(f"\n  DEBUG: Test 2 - camelCase field names:")
             payload2 = {
                 "data": [{
                     "productId": test_product['id'],
                     "priceBookId": price_book_id,
                     "price": test_product['clearance_price'],
-                    "taxId": test_product.get('tax_id')
+                    "taxId": product_tax_id
                 }]
             }
             print(f"  {json.dumps(payload2, indent=2)}")
@@ -258,13 +262,13 @@ class LightspeedXSeriesDiscountManager:
                 if hasattr(e, 'response') and e.response is not None and e.response.status_code != 500:
                     print(f"  Response body: {e.response.text[:300]}")
 
-                # Try 3: Without price_book_id (using product's tax_id)
+                # Try 3: Without price_book_id
                 print(f"\n  DEBUG: Test 3 - Without price_book_id in payload:")
                 payload3 = {
                     "data": [{
                         "product_id": test_product['id'],
                         "price": test_product['clearance_price'],
-                        "tax_id": test_product.get('tax_id')
+                        "tax_id": product_tax_id
                     }]
                 }
                 print(f"  {json.dumps(payload3, indent=2)}")
@@ -307,7 +311,7 @@ class LightspeedXSeriesDiscountManager:
                     product_entry = {
                         "product_id": product['id'],
                         "price": product['clearance_price'],
-                        "tax_id": product.get('tax_id')
+                        "tax_id": product.get('tax_id') or default_tax_id
                     }
                     batch_products.append(product_entry)
 
