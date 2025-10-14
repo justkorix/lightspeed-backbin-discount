@@ -210,15 +210,15 @@ class LightspeedXSeriesDiscountManager:
                     print(f"  DEBUG: product_id type: {type(price_book_products[0]['product_id'])}")
                     print(f"  DEBUG: retail_price type: {type(price_book_products[0]['retail_price'])}")
 
-                # Serialize payload to JSON string and send as data
-                json_payload = json.dumps(payload)
-                print(f"  DEBUG: Payload size: {len(json_payload)} bytes")
+                # Debug: Show exact headers being sent
+                print(f"  DEBUG: Headers: {self.headers}")
+                print(f"  DEBUG: Payload preview (first 500 chars): {json.dumps(payload)[:500]}...")
 
-                # Use PATCH with explicit JSON string and Content-Type
+                # Use PATCH with json parameter (requests handles serialization)
                 response = requests.patch(
                     f"{self.base_url}/price_books/{price_book_id}/products",
                     headers=self.headers,
-                    data=json_payload
+                    json=payload
                 )
                 response.raise_for_status()
                 print(f"  Successfully updated batch of {len(batch)} products")
