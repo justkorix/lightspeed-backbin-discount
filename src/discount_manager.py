@@ -219,8 +219,8 @@ class LightspeedXSeriesDiscountManager:
                     "Authorization": self.headers["Authorization"]
                 }
 
-                # Use PATCH with json parameter (requests automatically sets Content-Type)
-                response = requests.patch(
+                # Use POST to add products to price book (PATCH was giving "no body" errors)
+                response = requests.post(
                     f"{self.base_url}/price_books/{price_book_id}/products",
                     headers=headers_without_content_type,
                     json=payload
