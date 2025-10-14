@@ -52,7 +52,6 @@ class LightspeedXSeriesDiscountManager:
 
         print("Fetching products from Lightspeed X-Series...")
         page = 1
-        debug_printed = False
 
         while True:
             try:
@@ -64,17 +63,6 @@ class LightspeedXSeriesDiscountManager:
                 if not page_products:
                     break
 
-                # Debug: Print first product structure to see available fields
-                if not debug_printed and page_products:
-                    import json
-                    print(f"\n  DEBUG: Sample product from list API:")
-                    sample = page_products[0]
-                    print(f"  All fields: {list(sample.keys())}")
-                    print(f"  Price-related fields:")
-                    price_fields = {k: v for k, v in sample.items() if 'price' in k.lower() or 'tax' in k.lower()}
-                    print(f"  {json.dumps(price_fields, indent=4)}")
-                    print()
-                    debug_printed = True
 
                 products.extend(page_products)
                 print(f"  Page {page}: Fetched {len(page_products)} products (Total: {len(products)})")
@@ -197,122 +185,10 @@ class LightspeedXSeriesDiscountManager:
         if not products_to_add:
             return True
 
-        import json
-
-        # Test with just ONE product first
-        print("  DEBUG: Testing with SINGLE product first...")
-        test_product = products_to_add[0]
-
-        # Use default tax_id if product doesn't have one (from actual product data)
+        # Use default tax_id for products that don't have one
         default_tax_id = "06a3b11e-224b-11f0-ecdc-893f1c70d9b9"
-        product_tax_id = test_product.get('tax_id') or default_tax_id
 
-        print(f"  DEBUG: Test product details:")
-        print(f"    ID: {test_product['id']}")
-        print(f"    Name: {test_product['name']}")
-        print(f"    Clearance Price: {test_product['clearance_price']}")
-        print(f"    Tax ID: {product_tax_id} {'(default)' if not test_product.get('tax_id') else '(from product)'}")
-
-        # Try 1: Using product's tax_id (with fallback to default)
-        payload1 = {
-            "data": [{
-                "product_id": test_product['id'],
-                "price_book_id": price_book_id,
-                "price": test_product['clearance_price'],
-                "tax_id": product_tax_id
-            }]
-        }
-
-        print(f"\n  DEBUG: Test 1 - With price_book_id (snake_case):")
-        print(f"  {json.dumps(payload1, indent=2)}")
-
-        try:
-            response = requests.post(
-                f"{self.base_url}/price_books/{price_book_id}/products",
-                headers=self.headers,
-                json=payload1
-            )
-
-            print(f"  Response status: {response.status_code}")
-            if response.status_code != 200:
-                print(f"  Response body: {response.text[:500]}")
-
-            response.raise_for_status()
-            print(f"  ✓ Test 1 worked!")
-
-        except requests.exceptions.RequestException as e:
-            print(f"  ✗ Test 1 failed: {e}")
-            if hasattr(e, 'response') and e.response is not None and e.response.status_code != 500:
-                print(f"  Response body: {e.response.text[:300]}")
-
-            # Try 2: camelCase field names
-            print(f"\n  DEBUG: Test 2 - camelCase field names:")
-            payload2 = {
-                "data": [{
-                    "productId": test_product['id'],
-                    "priceBookId": price_book_id,
-                    "price": test_product['clearance_price'],
-                    "taxId": product_tax_id
-                }]
-            }
-            print(f"  {json.dumps(payload2, indent=2)}")
-
-            try:
-                response = requests.post(
-                    f"{self.base_url}/price_books/{price_book_id}/products",
-                    headers=self.headers,
-                    json=payload2
-                )
-
-                print(f"  Response status: {response.status_code}")
-                if response.status_code != 200:
-                    print(f"  Response body: {response.text[:500]}")
-
-                response.raise_for_status()
-                print(f"  ✓ Test 2 worked!")
-
-            except requests.exceptions.RequestException as e:
-                print(f"  ✗ Test 2 failed: {e}")
-                if hasattr(e, 'response') and e.response is not None and e.response.status_code != 500:
-                    print(f"  Response body: {e.response.text[:300]}")
-
-                # Try 3: Without price_book_id
-                print(f"\n  DEBUG: Test 3 - Without price_book_id in payload:")
-                payload3 = {
-                    "data": [{
-                        "product_id": test_product['id'],
-                        "price": test_product['clearance_price'],
-                        "tax_id": product_tax_id
-                    }]
-                }
-                print(f"  {json.dumps(payload3, indent=2)}")
-
-                try:
-                    response = requests.post(
-                        f"{self.base_url}/price_books/{price_book_id}/products",
-                        headers=self.headers,
-                        json=payload3
-                    )
-
-                    print(f"  Response status: {response.status_code}")
-                    if response.status_code != 200:
-                        print(f"  Response body: {response.text[:500]}")
-
-                    response.raise_for_status()
-                    print(f"  ✓ Test 3 worked!")
-
-                except requests.exceptions.RequestException as e:
-                    print(f"  ✗ Test 3 also failed: {e}")
-                    if hasattr(e, 'response') and e.response is not None:
-                        print(f"  Response body: {e.response.text[:300]}")
-
-                    print("\n  All three tests failed!")
-                    print("  The API documentation may have different requirements.")
-                    print("  Check: https://x-series-api.lightspeedhq.com/reference")
-                    return False
-
-        # If we get here, one of the formats worked
-        print("\n  Test successful! Now processing all products in batches...")
+        print(f"  Processing {len(products_to_add)} products in batches of 100...")
         batch_size = 100
         success = True
 
