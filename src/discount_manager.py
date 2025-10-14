@@ -51,6 +51,7 @@ class LightspeedXSeriesDiscountManager:
 
         print("Fetching products from Lightspeed X-Series...")
         page = 1
+        debug_printed = False
 
         while True:
             try:
@@ -61,6 +62,16 @@ class LightspeedXSeriesDiscountManager:
                 page_products = data.get('data', [])
                 if not page_products:
                     break
+
+                # Debug: Print first product structure to see available fields
+                if not debug_printed and page_products:
+                    import json
+                    print(f"\n  DEBUG: Sample product fields:")
+                    sample = page_products[0]
+                    tax_related_fields = {k: v for k, v in sample.items() if 'tax' in k.lower()}
+                    print(f"  Tax-related fields: {json.dumps(tax_related_fields, indent=2)}")
+                    print()
+                    debug_printed = True
 
                 products.extend(page_products)
                 print(f"  Page {page}: Fetched {len(page_products)} products (Total: {len(products)})")
