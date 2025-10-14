@@ -144,12 +144,15 @@ class LightspeedXSeriesDiscountManager:
 
             # Get outlet and customer group IDs
             outlet_ids, customer_group_ids = self.get_outlets_and_groups()
+            print(f"  Outlet IDs: {outlet_ids}")
+            print(f"  Customer Group IDs: {customer_group_ids}")
 
             new_price_book = {
                 "name": self.price_book_name,
                 "outlet_ids": outlet_ids,
                 "customer_group_ids": customer_group_ids
             }
+            print(f"  Request payload: {new_price_book}")
 
             response = requests.post(
                 f"{self.base_url}/price_books",
