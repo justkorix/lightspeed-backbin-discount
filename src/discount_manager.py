@@ -203,8 +203,8 @@ class LightspeedXSeriesDiscountManager:
         print("  DEBUG: Testing with SINGLE product first...")
         test_product = products_to_add[0]
 
-        # Use default tax_id if product doesn't have one
-        default_tax_id = "06a3b11e-224f-11f0-ecdc-893f1c70d9b9"
+        # Use default tax_id if product doesn't have one (from actual product data)
+        default_tax_id = "06a3b11e-224b-11f0-ecdc-893f1c70d9b9"
         product_tax_id = test_product.get('tax_id') or default_tax_id
 
         print(f"  DEBUG: Test product details:")
