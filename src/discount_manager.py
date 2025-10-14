@@ -197,11 +197,9 @@ class LightspeedXSeriesDiscountManager:
                 for product in batch:
                     product_entry = {
                         "product_id": product['id'],
-                        "price": product['clearance_price']  # Field is "price", not "retail_price"
+                        "price": product['clearance_price'],
+                        "tax_id": "06a3b11e-224f-11f0-ecdc-893f1c70d9b9"  # Required tax_id
                     }
-                    # Add tax_id if it exists
-                    if product.get('tax_id'):
-                        product_entry['tax_id'] = product['tax_id']
                     price_book_products.append(product_entry)
 
                 import json
